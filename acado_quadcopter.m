@@ -5,7 +5,7 @@ close all;
 Ts = 0.01;
 EXPORT = 1;
 
-DifferentialState  phi theta psi p q rr u v w;
+DifferentialState  phi theta psi p q rr x y z u v w;
 Control u1 u2 u3 u4;
 
 %Physical parameters
@@ -22,12 +22,15 @@ f_expl = acado.DifferentialEquation();
 f_expl.add(dot(phi) == p);
 f_expl.add(dot(theta) == q);
 f_expl.add(dot(psi) == rr);
-f_expl.add(dot(p) == q*rr*((Iyy-Izz)/Ixx) + q*(Jr/Ixx)*u1 + (l/Ixx)*u2);
+f_expl.add(dot(p) == q*rr*((Iyy-Izz)/Ixx) - q*(Jr/Ixx)*u1 + (l/Ixx)*u2);
 f_expl.add(dot(q) == p*rr*((Izz-Ixx)/Iyy) - p*(Jr/Iyy)*u1 + (l/Iyy)*u3);
-f_expl.add(dot(rr) == q*p*((Ixx-Iyy)/Izz) + (d/Izz)*u4);
-f_expl.add(dot(u) == ( (cos(phi)*sin(theta)*cos(psi))+(sin(phi)*sin(psi)) )*(u1/m));
-f_expl.add(dot(v) == ( (cos(phi)*sin(theta)*cos(psi))-(sin(phi)*cos(psi)) )*(u1/m));
-f_expl.add(dot(w) == g - (cos(phi)*cos(theta))*(u1/m));
+f_expl.add(dot(rr) == q*p*((Ixx-Iyy)/Izz) + (u4/Izz));
+f_expl.add(dot(x) == u);
+f_expl.add(dot(y) == v);
+f_expl.add(dot(z) == w);
+f_expl.add(dot(u) == ((cos(phi)*sin(theta)*cos(psi))+(sin(phi)*sin(psi)) )*(u1/m));
+f_expl.add(dot(v) == ((cos(phi)*sin(theta)*sin(psi))-(sin(phi)*cos(psi)) )*(u1/m));
+f_expl.add(dot(w) == -g +(cos(theta)*cos(phi))*(u1/m));
 %% SIMexport
 
 acadoSet('problemname', 'sim');
@@ -59,8 +62,8 @@ tEnd   = N*Ts;
 
 ocp = acado.OCP(tStart, tEnd, N );
 
-h =[ phi; theta; psi; p; q; rr; u; v; w; u1; u2; u3; u4]; 
-hN = [ phi; theta; psi; p; q; rr; u; v; w];
+h = [phi; theta; psi; p; q; rr; x; y; z; u; v; w; u1; u2; u3; u4]; 
+hN = [phi; theta; psi; p; q; rr; x; y; z; u ; v; w] ;
 
 W = (eye(length(h)))*0.01;
 WN = (eye(length(hN)))*0.0001;
@@ -102,8 +105,8 @@ if EXPORT
 end
 
 %% PARAMETERS SIMULATION
-X0 = zeros(1,9)+1;
-Xref = zeros(1,9);
+X0 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]+1;
+Xref = [0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0];
 simulationStart =  0.0;
 simulationEnd   =  16.0;
 input.x = repmat(Xref,(N+1),1);
@@ -148,7 +151,7 @@ while time(end) < Tf
     
     % Simulate system
     sim_input.x = state_sim(end,:).';
-    sim_input.u = 0*output.u(1,:).';
+    sim_input.u = output.u(1,:).';
     %sim_input.od = 0.2;
     states = integrate_pendulum(sim_input);
     state_sim = [state_sim; states.value'];
@@ -161,38 +164,43 @@ while time(end) < Tf
     %visualize(time, state_sim, Xref, xmin, xmax, l); 
     pause(0.75*abs(Ts-toc));
 end
-
+ 
 figure;
-subplot(2,3,1);
-title('Controls')
+subplot(2,4,1);
 plot(time, state_sim(:,1)); hold on;
 plot(time, state_sim(:,2)); hold on;
 plot(time, state_sim(:,3)); hold on;
 
 plot([0 time(end)], [0 0], 'r:');
-plot([0 time(end)], [xmin xmin], 'g--');
-plot([0 time(end)], [xmax xmax], 'g--');
 xlabel('time(s)');
-ylabel('Euler Angles');
+ylabel('Euler angles');
 
-subplot(2,3,2);
+subplot(2,4,2);
 plot(time, state_sim(:,4)); hold on;
 plot(time, state_sim(:,5)); hold on;
 plot(time, state_sim(:,6)); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
-ylabel('Angular Velocity');
+ylabel('Euler rates');
 
-subplot(2,3,3);
+subplot(2,4,3);
 plot(time, state_sim(:,7)); hold on;
 plot(time, state_sim(:,8)); hold on;
 plot(time, state_sim(:,9)); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
-ylabel('Translational Velocity');
+ylabel('Translational states');
+
+subplot(2,4,4);
+plot(time, state_sim(:,7)); hold on;
+plot(time, state_sim(:,8)); hold on;
+plot(time, state_sim(:,9)); hold on;
+plot([0 time(end)], [0 0], 'r:');
+xlabel('time(s)');
+ylabel('Translational velocities');
 
 
-subplot(2,3,[4 6]);
+subplot(2,4,[5 7]);
 stairs(time(1:end-1), controls_MPC(:,1),'r'); hold on;
 stairs(time(1:end-1), controls_MPC(:,2),'b'); hold on;
 stairs(time(1:end-1), controls_MPC(:,3),'g'); hold on;
@@ -201,4 +209,7 @@ plot([0 time(end)], [0 0], 'r:');
 % plot([0 time(end)], [Fmin Fmin], 'g--');
 % plot([0 time(end)], [Fmax Fmax], 'g--');
 xlabel('time(s)');
-ylabel('Controls');
+ylabel('Inputs');
+
+
+
