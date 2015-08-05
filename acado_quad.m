@@ -3,8 +3,10 @@ clc;
 clear all;
 close all;
 
-EXPORT = 1;
+EXPORT = 0;
 Ts = 0.01;      % sampling time
+Nx = 12;
+Nu = 4;
 
 %%Physical parameters
 m = 0.1;
@@ -42,7 +44,7 @@ sim = acado.SIMexport( Ts );
 
 sim.setModel(ode);      % pass the ODE model
 
-sim.set( 'INTEGRATOR_TYPE',             'INT_BDF'   );  % RK4 method
+sim.set( 'INTEGRATOR_TYPE',             'INT_IRK_GL4'   );  % RK4 method
 sim.set( 'NUM_INTEGRATOR_STEPS',        4           );
 
 if EXPORT
@@ -75,6 +77,10 @@ vtransmax=10;
 %ocp.subjectTo( ode );
 
 ocp.subjectTo( vtransmin <= v <= vtransmax );
+ocp.subjectTo( vtransmin <= u <= vtransmax );
+ocp.subjectTo( vtransmin <= w <= vtransmax );
+
+
 ocp.subjectTo( -90.0 <= u1 <= 90.0 );
 ocp.subjectTo( -90.0 <= u2 <= 90.0 );
 ocp.subjectTo( -90.0 <= u3 <= 90.0 );
@@ -87,8 +93,8 @@ mpc = acado.OCPexport( ocp );
 mpc.set( 'HESSIAN_APPROXIMATION',       'GAUSS_NEWTON'      );
 mpc.set( 'DISCRETIZATION_TYPE',         'MULTIPLE_SHOOTING' );
 mpc.set( 'SPARSE_QP_SOLUTION',          'FULL_CONDENSING_N2');
-mpc.set( 'INTEGRATOR_TYPE',             'INT_BDF'           );  % RK4 method
-mpc.set( 'NUM_INTEGRATOR_STEPS',         20                 );
+mpc.set( 'INTEGRATOR_TYPE',             'INT_IRK_GL4'           );  % RK4 method
+mpc.set( 'NUM_INTEGRATOR_STEPS',         2*N                 );
 mpc.set( 'QP_SOLVER',                   'QP_QPOASES'    	);
 
 if EXPORT
@@ -104,7 +110,7 @@ end
 
 %% PARAMETERS SIMULATION
 X0 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; % <-- TODO: initial state (downward position)
-Xref = [0, 0, 0.05, 0, 0, 0, 0, 0, 5, 0, 0, 0];     % <-- TODO: reference point (upward position)
+Xref = [0, 0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0];     % <-- TODO: reference point (upward position)
 
 
 
@@ -115,7 +121,7 @@ input.x = repmat(X0,N+1,1);      % <-- TODO: initialization of the state traject
 input.y = [repmat(Xref,N,1) repmat(Uref,N,1)];   %  <-- TODO: reference trajectory for the stage cost
 input.yN = Xref.';  % <-- TODO: reference trajectory for the terminal cost  
 
-input.shifting.strategy = 0;    % shifting is optional but highly recommended with RTI!
+input.shifting.strategy = 1;    % shifting is optional but highly recommended with RTI!
                                 %      1: use xEnd, 2: integrate
 
 % SIMULATION LOOP
@@ -124,7 +130,7 @@ display('               Simulation Loop'                                    )
 display('------------------------------------------------------------------')
 
 iter = 0; time = 0;
-Tf = 10;
+Tf = 25;
 INFO_MPC = [];
 controls_MPC = [];
 state_sim = X0;
@@ -132,6 +138,7 @@ input.W = diag([10 10 1000 10 10 100 10 10 10 1 1 1 1 1 1 1]);
 input.WN = eye(12);
 input.x0 = X0.';
 output = acado_MPCstep(input);
+ref_traj =[];
 
 %MPC iteration
 while time(end) < Tf
@@ -145,6 +152,12 @@ while time(end) < Tf
     controls_MPC = [controls_MPC; output.u(1,:)];
     input.x = output.x;
     input.u = output.u;
+
+    % shift reference:
+    ref_traj = [ref_traj; [input.yN.' Uref]];
+    input.y = [input.y(2:end,:); [input.yN.' Uref]];
+    input.yN(end-3) = sin(time(end));
+    
     
     % Simulate system
     sim_input.x = state_sim(end,:).';
@@ -164,49 +177,63 @@ end
 %% 
 figure;
 subplot(2,4,1);
-plot(time, state_sim(:,1)); hold on;
-plot(time, state_sim(:,2)); hold on;
-plot(time, state_sim(:,3)); hold on;
+plot(time, state_sim(:,1),'r'); hold on;
+plot(time, state_sim(:,2),'g'); hold on;
+plot(time, state_sim(:,3),'b'); hold on;
+%legend('\phi', '\Theta' , '\psi')
 
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Euler angles');
 
 subplot(2,4,2);
-plot(time, state_sim(:,4)); hold on;
-plot(time, state_sim(:,5)); hold on;
-plot(time, state_sim(:,6)); hold on;
+plot(time, state_sim(:,4),'r'); hold on;
+plot(time, state_sim(:,5),'g'); hold on;
+plot(time, state_sim(:,6),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Euler rates');
 
 subplot(2,4,3);
-plot(time, state_sim(:,7)); hold on;
-plot(time, state_sim(:,8)); hold on;
-plot(time, state_sim(:,9)); hold on;
+plot(time, state_sim(:,7),'r'); hold on;
+plot(time, state_sim(:,8),'g'); hold on;
+plot(time, state_sim(:,9),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Translational states');
 
 subplot(2,4,4);
-plot(time, state_sim(:,10)); hold on;
-plot(time, state_sim(:,11)); hold on;
-plot(time, state_sim(:,12)); hold on;
+plot(time, state_sim(:,10),'r'); hold on;
+plot(time, state_sim(:,11),'g'); hold on;
+plot(time, state_sim(:,12),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Translational velocities');
 
 
-subplot(2,4,[5 7]);
+subplot(2,4,[5 8]);
 stairs(time(1:end-1), controls_MPC(:,1),'r'); hold on;
 stairs(time(1:end-1), controls_MPC(:,2),'b'); hold on;
 stairs(time(1:end-1), controls_MPC(:,3),'g'); hold on;
 stairs(time(1:end-1), controls_MPC(:,4)); hold on;
 plot([0 time(end)], [0 0], 'r:');
-% plot([0 time(end)], [Fmin Fmin], 'g--');
-% plot([0 time(end)], [Fmax Fmax], 'g--');
 xlabel('time(s)');
 ylabel('Inputs');
+
+
+figure(2)
+subplot(3,1,1);
+plot(time, state_sim(:,7),'b'); hold on;
+plot(time, [0 ;ref_traj(:,7)],'r*');
+
+subplot(3,1,2);
+plot(time, state_sim(:,8),'b'); hold on;
+plot(time, [0 ;ref_traj(:,8)],'r*')
+
+subplot(3,1,3);
+plot(time, state_sim(:,9),'b'); hold on;
+plot(time, [0 ;ref_traj(:,9)],'r*');
+
 
 
 
