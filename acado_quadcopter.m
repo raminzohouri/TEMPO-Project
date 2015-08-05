@@ -2,7 +2,7 @@ clc;
 clear all;
 close all;
 
-Ts = 0.05;
+Ts = 0.01;
 EXPORT = 1;
 
 DifferentialState  phi theta psi p q rr u v w;
@@ -16,7 +16,7 @@ Izz = 0.013;
 Jr = 0.085;
 l = 0.28;
 g = 9.81;
-
+d = 2e-7;
 %% Differential Equation
 f_expl = acado.DifferentialEquation();
 f_expl.add(dot(phi) == p);
@@ -24,7 +24,7 @@ f_expl.add(dot(theta) == q);
 f_expl.add(dot(psi) == rr);
 f_expl.add(dot(p) == q*rr*((Iyy-Izz)/Ixx) + q*(Jr/Ixx)*u1 + (l/Ixx)*u2);
 f_expl.add(dot(q) == p*rr*((Izz-Ixx)/Iyy) - p*(Jr/Iyy)*u1 + (l/Iyy)*u3);
-f_expl.add(dot(rr) == q*p*((Ixx-Iyy)/Izz) + (l/Izz)*u4);
+f_expl.add(dot(rr) == q*p*((Ixx-Iyy)/Izz) + (d/Izz)*u4);
 f_expl.add(dot(u) == ( (cos(phi)*sin(theta)*cos(psi))+(sin(phi)*sin(psi)) )*(u1/m));
 f_expl.add(dot(v) == ( (cos(phi)*sin(theta)*cos(psi))-(sin(phi)*cos(psi)) )*(u1/m));
 f_expl.add(dot(w) == g - (cos(phi)*cos(theta))*(u1/m));
@@ -50,7 +50,7 @@ end
 %% MPCexport
 acadoSet('problemname', 'mpc');
 
-N = 60;
+N = 40;
 
       
 r = [ 0; 0; 0; 0; 0; 0; 0; 0; 0];
@@ -88,7 +88,7 @@ mpc.set( 'HESSIAN_APPROXIMATION',       'GAUSS_NEWTON'      );
 mpc.set( 'DISCRETIZATION_TYPE',         'MULTIPLE_SHOOTING' );
 mpc.set( 'SPARSE_QP_SOLUTION',          'FULL_CONDENSING_N2');
 mpc.set( 'INTEGRATOR_TYPE',             'INT_RK4'           );  % RK4 method
-mpc.set( 'NUM_INTEGRATOR_STEPS',        2*N                 );
+mpc.set( 'NUM_INTEGRATOR_STEPS',        20                 );
 mpc.set( 'QP_SOLVER',                   'QP_QPOASES'    	);
 if EXPORT
     mpc.exportCode( 'export_MPC' );
@@ -109,7 +109,7 @@ simulationEnd   =  16.0;
 input.x = repmat(Xref,(N+1),1);
 %input.od = [];
 
-Uref = zeros(1,4);
+Uref = [1,0,0,0];
 input.u = zeros(N,4);
 
 input.y = [repmat(Xref,N,1) repmat(Uref,N,1)];
@@ -126,7 +126,7 @@ display('               Simulation Loop'                                    )
 display('------------------------------------------------------------------')
 
 iter = 0; time = 0;
-Tf = 4;
+Tf = 10;
 KKT_MPC = []; INFO_MPC = [];
 controls_MPC = [];
 state_sim = X0;
@@ -148,7 +148,7 @@ while time(end) < Tf
     
     % Simulate system
     sim_input.x = state_sim(end,:).';
-    sim_input.u = output.u(1,:).';
+    sim_input.u = 0*output.u(1,:).';
     %sim_input.od = 0.2;
     states = integrate_pendulum(sim_input);
     state_sim = [state_sim; states.value'];
