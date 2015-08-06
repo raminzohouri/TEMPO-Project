@@ -10,7 +10,7 @@ Nu = 4;
 %Load parameters
 quad_params;
 
-DifferentialState phi theta psi p q rr x y z u v w;      % provide proper names for all differential states and controls etc.
+DifferentialState phi theta psi p q rr x y z u v w ;      % provide proper names for all differential states and controls etc.
 Control u1 u2 u3 u4;
 
 %% Differential Equations
@@ -65,21 +65,21 @@ ocp.minimizeLSQEndTerm( WN, hN );   % terminal cost
 %constraints
 
 %constraints to tranlational velocity
-vtransmin=-7.5; vtransmax=7.5;
+vtransmin=-10; vtransmax=10;
 ocp.subjectTo( vtransmin <= v <= vtransmax );
 ocp.subjectTo( vtransmin <= u <= vtransmax );
 ocp.subjectTo( vtransmin <= w <= vtransmax );
 
 
-euler_rates_min=-3*pi; euler_rates_max=3*pi;
+euler_rates_min=-6*pi; euler_rates_max=6*pi;
 ocp.subjectTo( euler_rates_min <= p <= euler_rates_max );
 ocp.subjectTo( euler_rates_min <= q <= euler_rates_max );
 ocp.subjectTo( euler_rates_min <= rr <= euler_rates_max );
 
-u1_min = 0; u1_max = 10; 
-u2_min = -0.5; u2_max = 0.5; 
-u3_min = -0.5; u3_max = 0.5; 
-u4_min = -0.5; u4_max = 0.5; 
+u1_min = 0; u1_max = 60; 
+u2_min = -80; u2_max = 80; 
+u3_min = -80; u3_max = 80; 
+u4_min = -80; u4_max = 80; 
 
 ocp.subjectTo( u1_min <= u1 <= u1_max );
 ocp.subjectTo( u2_min <= u2 <= u2_max );
@@ -156,12 +156,16 @@ while time(end) < Tf
     % shift reference:
     ref_traj = [ref_traj; [input.yN.' Uref]];
     input.y = [input.y(2:end,:); [input.yN.' Uref]];
- 
-     
-    input.yN(end-4) =  sin(time(end));
-    input.yN(end-5) =  cos(time(end));
-    input.yN(end-3) = (input.yN(end-3) + Ts/8);
- 
+    input.yN(end-3) =  sin(pi*time(end));
+    input.yN(end-5) =  cos(pi*time(end));
+    input.yN(end-4) = (input.yN(end-4) + Ts/4);
+%     if time(end) == 5
+%         input.yN(end-4)=input.yN(end-4)+rand(1)*5;
+%         input.yN(end-5)=input.yN(end-5)+rand(1)*5;
+%         input.yN(end-3)=input.yN(end-3)+rand(1)*5;
+%     end
+    
+    
     % Simulate system
     sim_input.x = state_sim(end,:).';
     sim_input.u = output.u(1,:).';
