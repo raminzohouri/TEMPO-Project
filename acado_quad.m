@@ -3,7 +3,7 @@ clc;
 clear all;
 close all;
 
-EXPORT = 0;
+EXPORT = 1;
 Ts = 0.01;      % sampling time
 Nx = 12;
 Nu = 4;
@@ -70,7 +70,11 @@ WN = acado.BMatrix(eye(Nx));
 ocp.minimizeLSQ( W, h );            % stage cost
 ocp.minimizeLSQEndTerm( WN, hN );   % terminal cost
 
+vtransmin=-10;
+vtransmax=10;
 
+%constraints
+%ocp.subjectTo( ode );
 
 % %constraints to tranlational velocity
 % vtransmin=-7.5; vtransmax=7.5;
@@ -137,15 +141,15 @@ display('               Simulation Loop'                                    )
 display('------------------------------------------------------------------')
 
 iter = 0; time = 0;
-Tf = 15;
+Tf = 25;
 INFO_MPC = [];
 controls_MPC = [];
 state_sim = X0;
-input.W = diag([1e-2 1e-2 1e-2 1e-3 1e-3  1e-3 1000 1000 1000 1e-2 1e-2 1e-2 1e-5 1e-5 1e-5 1]);
-input.WN = diag([1 1 1 1e-2 1e-2  1e-2 1000 1000 1000 1e-2 1e-2 1e-2]);
+input.W = diag([10 10 1000 10 10 100 10 10 10 1 1 1 1 1 1 1]);
+input.WN = eye(12);
 input.x0 = X0.';
 output = acado_MPCstep(input);
-ref_traj =input.y;
+ref_traj =[];
 
 %MPC iteration
 while time(end) < Tf
@@ -163,24 +167,15 @@ while time(end) < Tf
     % shift reference:
     ref_traj = [ref_traj; [input.yN.' Uref]];
     input.y = [input.y(2:end,:); [input.yN.' Uref]];
-%     input.yN(end-3) = sin(time(end));
-%     input.yN(end-4) = sin(time(end));
-    if (time(end) > 1)
-    input.yN(end-5) = 1;
-    end
-    if (time(end) > 5)
-    input.yN(end-4) = 1;
-    end
-    if (time(end) > 10)
-    input.yN(end-3) = 1;
-    end
+    input.yN(end-3) = sin(time(end));
+    
     
     % Simulate system
     sim_input.x = state_sim(end,:).';
     sim_input.u = output.u(1,:).';
     states = simulate_system(sim_input);
     state_sim = [state_sim; states.value'];
-    
+    draw_quad(time, state_sim, input.yN);
     iter = iter+1;
     nextTime = iter*Ts; 
     disp(['current time: ' num2str(nextTime) '   ' char(9) ' (RTI step -- QP error: ' num2str(output.info.status) ',' ' ' char(2) ' KKT val: ' num2str(output.info.kktValue,'%1.2e') ',' ' ' char(2) ' CPU time: ' num2str(round(output.info.cpuTime*1e6)) ' µs)'])
@@ -195,6 +190,7 @@ subplot(2,4,1);
 plot(time, state_sim(:,1),'r'); hold on;
 plot(time, state_sim(:,2),'g'); hold on;
 plot(time, state_sim(:,3),'b'); hold on;
+
 
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');

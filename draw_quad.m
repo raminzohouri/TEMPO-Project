@@ -1,9 +1,9 @@
-function []= draw_quad(Xref)%(time, state_sim, Xref, xmin, xmax, l)
+function []= draw_quad(time, state_sim, Xref)
 
     A = eye(9);
-    A(1,4) = Xref(1);
-    A(1,5) = Xref(2);
-    A(1,6) = Xref(3);
+    A(1,4) = state_sim(end,1);
+    A(1,5) = state_sim(end,2);
+    A(1,6) = state_sim(end,3);
 %     Xref =  [phi; theta; psi; p; q; rr; x; y; z; u; v; w; ]; 
 %     phi = A(1,4);
 %     the = A(1,5);
@@ -126,7 +126,8 @@ function []= draw_quad(Xref)%(time, state_sim, Xref, xmin, xmax, l)
 
     % Plot the box rotation and ang. velocity and inertial frame velocity
     % vector
-    figure();
+    figure(10);
+    subplot(1,2,1);
     plot3(bNSR(1,:),bNSR(2,:),bNSR(3,:),'b','LineWidth',3) % Body Arm
     hold on
     plot3(bEWR(1,:),bEWR(2,:),bEWR(3,:),'b','LineWidth',3) % Body Arm
@@ -163,4 +164,21 @@ function []= draw_quad(Xref)%(time, state_sim, Xref, xmin, xmax, l)
     qp1 = quiver3(0,0,0,omi(1,1),omi(1,2),omi(1,3),'ro');
     qp2 = quiver3(0,0,0,Vi(1,1),Vi(1,2),Vi(1,3),'k');
     hold off
+    
+
+    subplot(1,2,2);
+    plot3(state_sim(:,7),state_sim(:,8),state_sim(:,9),'ob');
+    hold on
+    plot3(Xref(7),Xref(8),Xref(9),'o','MarkerFaceColor','red','MarkerSize',8);
+    hold off
+    grid on;
+    axis square
+    xlabel('X')
+    ylabel('Y')
+    zlabel('Z')
+    xlim([-2 2]);
+    ylim([-2 2]);
+    zlim([-2 2]);
+
+  
 end
