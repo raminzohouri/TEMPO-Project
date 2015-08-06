@@ -3,7 +3,7 @@ clc;
 clear all;
 close all;
 
-EXPORT = 0;
+EXPORT = 1;
 Ts = 0.01;      % sampling time
 Nx = 12;
 Nu = 4;
@@ -156,16 +156,12 @@ while time(end) < Tf
     % shift reference:
     ref_traj = [ref_traj; [input.yN.' Uref]];
     input.y = [input.y(2:end,:); [input.yN.' Uref]];
-<<<<<<< HEAD
-    input.yN(end-5) = sin(time(end));
-=======
+ 
+     
     input.yN(end-4) =  sin(time(end));
     input.yN(end-5) =  cos(time(end));
     input.yN(end-3) = (input.yN(end-3) + Ts/8);
-
->>>>>>> c930066dfce15c0da699115bc66a44c88418ea01
-    
-    
+ 
     % Simulate system
     sim_input.x = state_sim(end,:).';
     sim_input.u = output.u(1,:).';
