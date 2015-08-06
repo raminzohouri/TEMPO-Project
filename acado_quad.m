@@ -3,7 +3,7 @@ clc;
 clear all;
 close all;
 
-EXPORT = 0;
+EXPORT = 1;
 Ts = 0.01;      % sampling time
 Nx = 12;
 Nu = 4;
@@ -156,7 +156,7 @@ while time(end) < Tf
     % shift reference:
     ref_traj = [ref_traj; [input.yN.' Uref]];
     input.y = [input.y(2:end,:); [input.yN.' Uref]];
-    input.yN(end-3) = sin(time(end));
+    input.yN(end-4) = sin(time(end));
     
     
     % Simulate system
@@ -164,7 +164,7 @@ while time(end) < Tf
     sim_input.u = output.u(1,:).';
     states = simulate_system(sim_input);
     state_sim = [state_sim; states.value'];
-    
+    draw_quad(time, state_sim, input.yN);
     iter = iter+1;
     nextTime = iter*Ts; 
     disp(['current time: ' num2str(nextTime) '   ' char(9) ' (RTI step -- QP error: ' num2str(output.info.status) ',' ' ' char(2) ' KKT val: ' num2str(output.info.kktValue,'%1.2e') ',' ' ' char(2) ' CPU time: ' num2str(round(output.info.cpuTime*1e6)) ' µs)'])
@@ -233,7 +233,9 @@ plot(time, [0 ;ref_traj(:,8)],'r*')
 subplot(3,1,3);
 plot(time, state_sim(:,9),'b'); hold on;
 plot(time, [0 ;ref_traj(:,9)],'r*');
-
+xlim([-5 5]);
+ylim([-5 5]);
+zlim([-5 5]);
 
 
 

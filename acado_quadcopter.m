@@ -161,7 +161,7 @@ while time(end) < Tf
     nextTime = iter*Ts; 
     disp(['current time: ' num2str(nextTime) '   ' char(9) ' (RTI step -- QP error: ' num2str(output.info.status) ',' ' ' char(2) ' KKT val: ' num2str(output.info.kktValue,'%1.2e') ',' ' ' char(2) ' CPU time: ' num2str(round(output.info.cpuTime*1e6)) ' µs)'])
     time = [time nextTime];
-    
+    draw_quad(time, state_sim, Xref);
     %visualize(time, state_sim, Xref, xmin, xmax, l); 
     pause(0.75*abs(Ts-toc));
 end
