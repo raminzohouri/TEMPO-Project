@@ -49,10 +49,11 @@ decorations.pathreplacing,decorations.pathmorphing,shapes,matrix,shapes}
 \begin{frame}
 \frametitle{Motivation}
 \begin{itemize}
-\item Real time control problems:
+\item Control challanges of Quadrotor:
 \subitem Under actuated dynamics
 \subitem Strongly coupled non-linearities
 \subitem Uncertain paraeters
+\subitem Open loop unstable
 \begin{figure}
 \includegraphics[scale=0.3]{./figures/quad.png}
 \caption{\tiny Quadrator by 3D-Robotics.}
@@ -87,7 +88,28 @@ decorations.pathreplacing,decorations.pathmorphing,shapes,matrix,shapes}
 \end{frame}
 
 \begin{frame}
-\frametitle{Event Related Potential (ERP) Based Learning}
+{Problem Formulation}
+\begin{align}
+\text{minimize}&&\int_{0}^{T} || \left[
+\begin{array}{c}
+x(t)\\
+u(t)\\
+\end{array}
+\right]-y(t) ||_{W} ^{2} dt + || x(T) - y(T) ||_{W_N}^ {2} //
+\text{subject to} x(0) = && \hat{x}_0,
+                        && \dot{x} = f(x(t), u(t)),
+                        && 0 \leq u(1) \leq 10,
+                        && -7.5 \leq u(2) \leq 0.5,
+                        && -7.5 \leq u(3) \leq 7.5,
+                        && -7.5 \leq u(4) \leq 7.5,
+                       -7.5  \ u \leq  7.5,
+                        && -7.5 \leq v \leq 7.5,
+                        && -7.5 \leq w \leq 7.5,
+\end{align} 
+\end{frame}
+
+\begin{frame}
+\frametitle{Results}
 \begin{table}[h!] 
   \caption{Tricopter Parameters} 
 \begin{center} 
@@ -122,13 +144,7 @@ decorations.pathreplacing,decorations.pathmorphing,shapes,matrix,shapes}
 \end{table}
 \end{frame}
 
-\begin{frame}
-{Video}
-\begin{itemize}
 
-\item how have any idea please put it here 
-\end{itemize}
-\end{frame}
 
 
 \begin{frame}
