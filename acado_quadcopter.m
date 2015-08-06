@@ -8,15 +8,8 @@ EXPORT = 1;
 DifferentialState  phi theta psi p q rr x y z u v w;
 Control u1 u2 u3 u4;
 
-%Physical parameters
-m = 0.46;
-Ixx = 0.048;
-Iyy = 0.048;
-Izz = 0.088;
-Jr = 0.085;
-l = 0.22;
-g = 9.81;
-d = 2e-7;
+%Load parameters
+quad_params;
 %% Differential Equation
 f_expl = acado.DifferentialEquation();
 f_expl.add(dot(phi) == p);
