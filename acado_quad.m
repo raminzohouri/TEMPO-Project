@@ -76,26 +76,26 @@ vtransmax=10;
 %constraints
 %ocp.subjectTo( ode );
 
-% %constraints to tranlational velocity
-% vtransmin=-7.5; vtransmax=7.5;
-% ocp.subjectTo( vtransmin <= v <= vtransmax );
-% ocp.subjectTo( vtransmin <= u <= vtransmax );
-% ocp.subjectTo( vtransmin <= w <= vtransmax );
-% 
-% euler_rates_min=-2*pi; euler_rates_max=2*pi;
-% ocp.subjectTo( euler_rates_min <= p <= euler_rates_max );
-% ocp.subjectTo( euler_rates_min <= q <= euler_rates_max );
-% ocp.subjectTo( euler_rates_min <= rr <= euler_rates_max );
-% 
-% u1_min = -10; u1_max = 10; 
-% u2_min = -10; u2_max = 10; 
-% u3_min = -10; u3_max = 10; 
-% u4_min = -10; u4_max = 10; 
-% 
-% ocp.subjectTo( u1_min <= u1 <= u1_max );
-% ocp.subjectTo( u2_min <= u2 <= u2_max );
-% ocp.subjectTo( u3_min <= u3 <= u3_max );
-% ocp.subjectTo( u4_min <= u4 <= u4_max );
+%constraints to tranlational velocity
+vtransmin=-7.5; vtransmax=7.5;
+ocp.subjectTo( vtransmin <= v <= vtransmax );
+ocp.subjectTo( vtransmin <= u <= vtransmax );
+ocp.subjectTo( vtransmin <= w <= vtransmax );
+
+euler_rates_min=-2*pi; euler_rates_max=2*pi;
+ocp.subjectTo( euler_rates_min <= p <= euler_rates_max );
+ocp.subjectTo( euler_rates_min <= q <= euler_rates_max );
+ocp.subjectTo( euler_rates_min <= rr <= euler_rates_max );
+
+u1_min = -10; u1_max = 10; 
+u2_min = -10; u2_max = 10; 
+u3_min = -10; u3_max = 10; 
+u4_min = -10; u4_max = 10; 
+
+ocp.subjectTo( u1_min <= u1 <= u1_max );
+ocp.subjectTo( u2_min <= u2 <= u2_max );
+ocp.subjectTo( u3_min <= u3 <= u3_max );
+ocp.subjectTo( u4_min <= u4 <= u4_max );
 
 %Acado settings
 ocp.setModel(ode);      % pass the ODE model
@@ -145,11 +145,11 @@ Tf = 25;
 INFO_MPC = [];
 controls_MPC = [];
 state_sim = X0;
-input.W = diag([10 10 1000 10 10 100 10 10 10 1 1 1 1 1 1 1]);
-input.WN = eye(12);
+input.W = diag([0 0 0 0 0 0 1 1 1 0  0 0 1e-6 1e-6 1e-6 1e-6]);
+input.WN = diag([0 0 0 0 0 0 1 1 1 0 0 0]);
 input.x0 = X0.';
 output = acado_MPCstep(input);
-ref_traj =[];
+ref_traj = input.y;
 
 %MPC iteration
 while time(end) < Tf
@@ -167,7 +167,7 @@ while time(end) < Tf
     % shift reference:
     ref_traj = [ref_traj; [input.yN.' Uref]];
     input.y = [input.y(2:end,:); [input.yN.' Uref]];
-    input.yN(end-3) = sin(time(end));
+    input.yN(end-4) = sin(time(end));
     
     
     % Simulate system
@@ -175,7 +175,7 @@ while time(end) < Tf
     sim_input.u = output.u(1,:).';
     states = simulate_system(sim_input);
     state_sim = [state_sim; states.value'];
-    draw_quad(time, state_sim, input.yN);
+%     draw_quad(time, state_sim, input.yN);
     iter = iter+1;
     nextTime = iter*Ts; 
     disp(['current time: ' num2str(nextTime) '   ' char(9) ' (RTI step -- QP error: ' num2str(output.info.status) ',' ' ' char(2) ' KKT val: ' num2str(output.info.kktValue,'%1.2e') ',' ' ' char(2) ' CPU time: ' num2str(round(output.info.cpuTime*1e6)) ' µs)'])
@@ -190,8 +190,6 @@ subplot(2,4,1);
 plot(time, state_sim(:,1),'r'); hold on;
 plot(time, state_sim(:,2),'g'); hold on;
 plot(time, state_sim(:,3),'b'); hold on;
-
-
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Euler angles');
