@@ -3,7 +3,7 @@ clc;
 clear all;
 close all;
 
-EXPORT = 0;
+EXPORT = 1;
 Ts = 0.01;      % sampling time
 Nx = 12;
 Nu = 4;
@@ -230,20 +230,47 @@ xlabel('time(s)');
 ylabel('U4');
 
 
+
+
 figure(2)
 subplot(3,1,1);
 plot(time, state_sim(:,7),'b'); hold on;
 plot(time, ref_traj(1:(end-N+1),7),'r--');
+xlabel('time(s)');
+ylabel('X [m]');
+legend('Simulation', 'Reference');
+
 
 subplot(3,1,2);
 plot(time, state_sim(:,8),'b'); hold on;
 plot(time, ref_traj(1:(end-N+1),8),'r--');
+ylabel('Y [m]');
+xlabel('time(s)');
+legend('Simulation', 'Reference');
+
+
 
 subplot(3,1,3);
 plot(time, state_sim(:,9),'b'); hold on;
 plot(time, ref_traj(1:(end-N+1),9),'r--');
+ylabel('Z [m]');
+xlabel('time(s)');
+legend('Simulation', 'Reference');
 
 
 
+figure(3)
+subplot(3,1,1);
+plot(time, state_sim(:,7)-ref_traj(1:(end-N+1),7),'b'); hold on;
+ylabel('Error X [m]');
+xlabel('time(s)');
+
+subplot(3,1,2);
+plot(time, state_sim(:,8)-ref_traj(1:(end-N+1),8),'b'); hold on;
+ylabel('Error Y [m]');
+
+subplot(3,1,3);
+plot(time, state_sim(:,9)-ref_traj(1:(end-N+1),9),'b'); hold on;
+ylabel('Error Z [m]');
 
 
