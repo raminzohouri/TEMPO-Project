@@ -9,12 +9,12 @@ DifferentialState  phi theta psi p q rr x y z u v w;
 Control u1 u2 u3 u4;
 
 %Physical parameters
-m = 2.1;
-Ixx = 0.011;
-Iyy = 0.012;
-Izz = 0.013;
+m = 0.46;
+Ixx = 0.048;
+Iyy = 0.048;
+Izz = 0.088;
 Jr = 0.085;
-l = 0.28;
+l = 0.22;
 g = 9.81;
 d = 2e-7;
 %% Differential Equation
@@ -105,14 +105,15 @@ if EXPORT
 end
 
 %% PARAMETERS SIMULATION
+
 X0 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]+1;
-Xref = [0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0];
+Xref = [0, 0, 0, 0, 0, 0, 0, 0, 5, 1e-7, 1e-7, 1e-7];
 simulationStart =  0.0;
 simulationEnd   =  16.0;
 input.x = repmat(Xref,(N+1),1);
 %input.od = [];
 
-Uref = [1,0,0,0];
+Uref = [1,1,1,1];
 input.u = zeros(N,4);
 
 input.y = [repmat(Xref,N,1) repmat(Uref,N,1)];
@@ -144,14 +145,14 @@ while time(end) < Tf
     % Save the MPC step
     INFO_MPC = [INFO_MPC; output.info];
     KKT_MPC = [KKT_MPC; output.info.kktValue];
-    controls_MPC = [controls_MPC; output.u(1,:)];
-
+    controls_MPC = [controls_MPC;  output.u(1,:)];
+    
     input.x = output.x;
-    input.u = output.u;
+    input.u = 0*output.u;
     
     % Simulate system
     sim_input.x = state_sim(end,:).';
-    sim_input.u = output.u(1,:).';
+    sim_input.u = 0*output.u(1,:).';
     %sim_input.od = 0.2;
     states = integrate_pendulum(sim_input);
     state_sim = [state_sim; states.value'];
@@ -167,44 +168,49 @@ end
  
 figure;
 subplot(2,4,1);
-plot(time, state_sim(:,1)); hold on;
-plot(time, state_sim(:,2)); hold on;
-plot(time, state_sim(:,3)); hold on;
+plot(time, state_sim(:,1),'-.m'); hold on;
+plot(time, state_sim(:,2),'-.b'); hold on;
+plot(time, state_sim(:,3),'-.k'); hold on;
 
+legend('phi','theta','psi');
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Euler angles');
 
 subplot(2,4,2);
-plot(time, state_sim(:,4)); hold on;
-plot(time, state_sim(:,5)); hold on;
-plot(time, state_sim(:,6)); hold on;
+plot(time, state_sim(:,4),'-.m'); hold on;
+plot(time, state_sim(:,5),'-.b'); hold on;
+plot(time, state_sim(:,6),'-.k'); hold on;
+legend('p','q','rr');
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Euler rates');
-
+ 
 subplot(2,4,3);
-plot(time, state_sim(:,7)); hold on;
-plot(time, state_sim(:,8)); hold on;
-plot(time, state_sim(:,9)); hold on;
+plot(time, state_sim(:,7),'-.m'); hold on;
+plot(time, state_sim(:,8),'-.b'); hold on;
+plot(time, state_sim(:,9),'-.k'); hold on;
+legend('x','y','z');
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Translational states');
 
 subplot(2,4,4);
-plot(time, state_sim(:,7)); hold on;
-plot(time, state_sim(:,8)); hold on;
-plot(time, state_sim(:,9)); hold on;
+plot(time, state_sim(:,10),'-.m'); hold on;
+plot(time, state_sim(:,11),'-.b'); hold on;
+plot(time, state_sim(:,12),'-.k'); hold on;
+legend('u','v','w');
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Translational velocities');
 
 
 subplot(2,4,[5 7]);
-stairs(time(1:end-1), controls_MPC(:,1),'r'); hold on;
-stairs(time(1:end-1), controls_MPC(:,2),'b'); hold on;
-stairs(time(1:end-1), controls_MPC(:,3),'g'); hold on;
-stairs(time(1:end-1), controls_MPC(:,4)); hold on;
+stairs(time(1:end-1), controls_MPC(:,1),'-.r'); hold on;
+stairs(time(1:end-1), controls_MPC(:,2),'-.b'); hold on;
+stairs(time(1:end-1), controls_MPC(:,3),'-.m'); hold on;
+stairs(time(1:end-1), controls_MPC(:,4),'-.k'); hold on;
+legend('u1','u2','u3','u4');
 plot([0 time(end)], [0 0], 'r:');
 % plot([0 time(end)], [Fmin Fmin], 'g--');
 % plot([0 time(end)], [Fmax Fmax], 'g--');
