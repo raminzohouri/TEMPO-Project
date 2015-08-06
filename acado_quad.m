@@ -233,9 +233,6 @@ plot(time, [0 ;ref_traj(:,8)],'r*')
 subplot(3,1,3);
 plot(time, state_sim(:,9),'b'); hold on;
 plot(time, [0 ;ref_traj(:,9)],'r*');
-xlim([-5 5]);
-ylim([-5 5]);
-zlim([-5 5]);
 
 
 

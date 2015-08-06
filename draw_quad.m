@@ -176,5 +176,9 @@ function []= draw_quad(time, state_sim, Xref)
     xlabel('X')
     ylabel('Y')
     zlabel('Z')
+    xlim([-2 2]);
+    ylim([-2 2]);
+    zlim([-2 2]);
+
   
 end
