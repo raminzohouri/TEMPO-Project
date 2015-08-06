@@ -4,15 +4,15 @@ clear all;
 close all;
 
 EXPORT = 1;
-Ts = 0.05;      % sampling time
+Ts = 0.01;      % sampling time
 Nx = 12;
-Nu = 4;
+Nu = 5;
 
 %Load parameters
 quad_params;
 
 DifferentialState phi theta psi p q rr x y z u v w;      % provide proper names for all differential states and controls etc.
-Control u1 u2 u3 u4;
+Control u1 u2 u3 u4 s;
 
 %% Differential Equations
 
@@ -55,7 +55,7 @@ acadoSet('problemname', 'mpc');
 N = 40;     % number of shooting intervals
 ocp = acado.OCP( 0.0, N*Ts, N );
 
-h = [phi; theta; psi; p; q; rr; x; y; z; u; v; w; u1; u2; u3; u4] ;   % <-- TODO: residual function for the stage cost
+h = [phi; theta; psi; p; q; rr; x; y; z; u; v; w; u1; u2; u3; u4; s] ;   % <-- TODO: residual function for the stage cost
 hN = [phi; theta; psi; p; q; rr; x; y; z; u ; v; w] ;   % <-- TODO: residual function for the stage cost
 W = acado.BMatrix(eye(Nx+Nu));  % <-- TODO: weighting matrix for the stage cost
 WN = acado.BMatrix(eye(Nx));
@@ -63,28 +63,41 @@ WN = acado.BMatrix(eye(Nx));
 ocp.minimizeLSQ( W, h );            % stage cost
 ocp.minimizeLSQEndTerm( WN, hN );   % terminal cost
 
+ocp.subjectTo( s >= 0 );
 
 
-% %constraints to tranlational velocity
-% vtransmin=-7.5; vtransmax=7.5;
+%constraints to tranlational velocity
+vtransmin=-7.5; vtransmax=7.5;
+ocp.subjectTo( vtransmin <= v + s );
+ocp.subjectTo( v - s <= vtransmax );
 % ocp.subjectTo( vtransmin <= v <= vtransmax );
 % ocp.subjectTo( vtransmin <= u <= vtransmax );
 % ocp.subjectTo( vtransmin <= w <= vtransmax );
-% 
-% euler_rates_min=-2*pi; euler_rates_max=2*pi;
+ocp.subjectTo( vtransmin <= u + s );
+ocp.subjectTo( u - s <= vtransmax );
+ocp.subjectTo( vtransmin <= w + s );
+ocp.subjectTo( w - s <= vtransmax );
+
+euler_rates_min=-3*pi; euler_rates_max=3*pi;
 % ocp.subjectTo( euler_rates_min <= p <= euler_rates_max );
 % ocp.subjectTo( euler_rates_min <= q <= euler_rates_max );
 % ocp.subjectTo( euler_rates_min <= rr <= euler_rates_max );
-% 
-% u1_min = -10; u1_max = 10; 
-% u2_min = -10; u2_max = 10; 
-% u3_min = -10; u3_max = 10; 
-% u4_min = -10; u4_max = 10; 
-% 
-% ocp.subjectTo( u1_min <= u1 <= u1_max );
-% ocp.subjectTo( u2_min <= u2 <= u2_max );
-% ocp.subjectTo( u3_min <= u3 <= u3_max );
-% ocp.subjectTo( u4_min <= u4 <= u4_max );
+ocp.subjectTo( euler_rates_min <= p + s );
+ocp.subjectTo( p - s <= euler_rates_max );
+ocp.subjectTo( euler_rates_min <= q + s );
+ocp.subjectTo( q - s <= euler_rates_max );
+ocp.subjectTo( euler_rates_min <= rr + s );
+ocp.subjectTo( rr - s <= euler_rates_max );
+
+u1_min =  0; u1_max = 100; 
+u2_min = -50; u2_max = 50; 
+u3_min = -50; u3_max = 50; 
+u4_min = -50; u4_max = 50; 
+
+ocp.subjectTo( u1_min <= u1 <= u1_max );
+ocp.subjectTo( u2_min <= u2 <= u2_max );
+ocp.subjectTo( u3_min <= u3 <= u3_max );
+ocp.subjectTo( u4_min <= u4 <= u4_max );
 
 %Acado settings
 ocp.setModel(ode);      % pass the ODE model
@@ -114,7 +127,7 @@ Xref = [0, 0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0];     % <-- TODO: reference point (
 
 
 
-Uref = [m*g, 0, 0, 0];
+Uref = [m*g, 0, 0, 0, 0];
 input.u = zeros(N,4);     % <-- TODO: initialization of the control trajectory
 input.x = repmat(X0,N+1,1);      % <-- TODO: initialization of the state trajectory
 
@@ -134,8 +147,8 @@ Tf = 15;
 INFO_MPC = [];
 controls_MPC = [];
 state_sim = X0;
-input.W = diag([1e-2 1e-2 1e-2 1e-3 1e-3  1e-3 1000 1000 1000 1e-2 1e-2 1e-2 1e-5 1e-5 1e-5 1]);
-input.WN = diag([1 1 1 1e-2 1e-2  1e-2 1000 1000 1000 1e-2 1e-2 1e-2]);
+input.W = diag([0 0 0 0 0 0 1 1 1 0  0 0 1e-6 1e-6 1e-6 1e-6 1]);
+input.WN = diag([0 0 0 0 0 0 1 1 1 0 0 0]);
 input.x0 = X0.';
 output = acado_MPCstep(input);
 ref_traj =input.y;
@@ -156,24 +169,23 @@ while time(end) < Tf
     % shift reference:
     ref_traj = [ref_traj; [input.yN.' Uref]];
     input.y = [input.y(2:end,:); [input.yN.' Uref]];
-%     input.yN(end-3) = sin(time(end));
-%     input.yN(end-4) = sin(time(end));
     if (time(end) > 1)
     input.yN(end-5) = 1;
     end
-    if (time(end) > 5)
-    input.yN(end-4) = 1;
-    end
-    if (time(end) > 10)
-    input.yN(end-3) = 1;
-    end
+%     if (time(end) > 5)
+%     input.yN(end-4) = 1;
+%     end
+%     if (time(end) > 10)
+%     input.yN(end-3) = 1;
+%     end
     
     % Simulate system
     sim_input.x = state_sim(end,:).';
     sim_input.u = output.u(1,:).';
     states = simulate_system(sim_input);
     state_sim = [state_sim; states.value'];
-    
+%          draw_quad(time, state_sim, input.y(1,:));
+
     iter = iter+1;
     nextTime = iter*Ts; 
     disp(['current time: ' num2str(nextTime) '   ' char(9) ' (RTI step -- QP error: ' num2str(output.info.status) ',' ' ' char(2) ' KKT val: ' num2str(output.info.kktValue,'%1.2e') ',' ' ' char(2) ' CPU time: ' num2str(round(output.info.cpuTime*1e6)) ' µs)'])

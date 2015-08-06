@@ -154,15 +154,7 @@ function []= draw_quad(time, state_sim, Xref)
     ylim([-3 3])
     zlim([-3 3])
     % view(handles.AZval,handles.ELval)
-    grid on
-
-    omi = zeros(length(A),3); % Initialize omega inertiaF points array (L(A)x3)
-    P = A(:,1); Q = A(:,2); Rw = A(:,3);
-    MombMax = max(sqrt(P.^2+Q.^2+Rw.^2)); % Calculate max magnitude of omb
-    omb = 3/MombMax*[P,Q,Rw].'; % Store and scale current omega bodyF
-    omi(1,:) = R*omb(:,1); % Rotate omegab to inertiaF store in omegai array
-    qp1 = quiver3(0,0,0,omi(1,1),omi(1,2),omi(1,3),'ro');
-    qp2 = quiver3(0,0,0,Vi(1,1),Vi(1,2),Vi(1,3),'k');
+    grid on   
     hold off
     
 
