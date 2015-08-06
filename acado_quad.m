@@ -156,7 +156,7 @@ while time(end) < Tf
     % shift reference:
     ref_traj = [ref_traj; [input.yN.' Uref]];
     input.y = [input.y(2:end,:); [input.yN.' Uref]];
-    input.yN(end-4) = sin(time(end));
+    input.yN(end-5) = sin(time(end));
     
     
     % Simulate system
