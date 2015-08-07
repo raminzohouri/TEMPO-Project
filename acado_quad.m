@@ -65,21 +65,22 @@ ocp.minimizeLSQEndTerm( WN, hN );   % terminal cost
 %constraints
 
 %constraints to tranlational velocity
-vtransmin=-7.5; vtransmax=7.5;
+%constraints to tranlational velocity
+vtransmin=-10; vtransmax=10;
 ocp.subjectTo( vtransmin <= v <= vtransmax );
 ocp.subjectTo( vtransmin <= u <= vtransmax );
 ocp.subjectTo( vtransmin <= w <= vtransmax );
 
 
-euler_rates_min=-3*pi; euler_rates_max=3*pi;
+euler_rates_min=-6*pi; euler_rates_max=6*pi;
 ocp.subjectTo( euler_rates_min <= p <= euler_rates_max );
 ocp.subjectTo( euler_rates_min <= q <= euler_rates_max );
 ocp.subjectTo( euler_rates_min <= rr <= euler_rates_max );
 
-u1_min = 0; u1_max = 10; 
-u2_min = -0.5; u2_max = 0.5; 
-u3_min = -0.5; u3_max = 0.5; 
-u4_min = -0.5; u4_max = 0.5; 
+u1_min = 0; u1_max = 15; 
+u2_min = -1; u2_max = 1; 
+u3_min = -1; u3_max = 1; 
+u4_min = -1; u4_max = 1; 
 
 ocp.subjectTo( u1_min <= u1 <= u1_max );
 ocp.subjectTo( u2_min <= u2 <= u2_max );
@@ -130,7 +131,7 @@ display('               Simulation Loop'                                    )
 display('------------------------------------------------------------------')
 
 iter = 0; time = 0;
-Tf = 10;
+Tf = 4;
 INFO_MPC = [];
 controls_MPC = [];
 state_sim = X0;
@@ -158,9 +159,9 @@ while time(end) < Tf
     input.y = [input.y(2:end,:); [input.yN.' Uref]];
  
      
-    input.yN(end-4) =  sin(time(end));
-    input.yN(end-5) =  cos(time(end));
-    input.yN(end-3) = (input.yN(end-3) + Ts/8);
+    input.yN(end-4) =  sin(pi*time(end));
+    input.yN(end-5) =  cos(pi*time(end));
+    input.yN(end-3) = (input.yN(end-3) + Ts/4);
  
     % Simulate system
     sim_input.x = state_sim(end,:).';
@@ -185,6 +186,7 @@ plot(time, state_sim(:,3),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Euler angles');
+grid on;
 
 subplot(2,4,2);
 plot(time, state_sim(:,4),'r'); hold on;
@@ -193,6 +195,8 @@ plot(time, state_sim(:,6),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Euler rates');
+grid on;
+
 
 subplot(2,4,3);
 plot(time, state_sim(:,7),'r'); hold on;
@@ -201,6 +205,8 @@ plot(time, state_sim(:,9),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Translational states');
+grid on;
+
 
 subplot(2,4,4);
 plot(time, state_sim(:,10),'r'); hold on;
@@ -209,25 +215,36 @@ plot(time, state_sim(:,12),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Translational velocities');
+grid on;
+
 
 
 subplot(2,4,5);
 stairs(time(1:end-1), controls_MPC(:,1),'r'); hold on;
 xlabel('time(s)');
 ylabel('U1');
+grid on;
 subplot(2,4,6);
 stairs(time(1:end-1), controls_MPC(:,2),'b'); hold on;
 xlabel('time(s)');
 ylabel('U2');
+grid on;
+
 subplot(2,4,7);
 stairs(time(1:end-1), controls_MPC(:,3),'g'); hold on;
 xlabel('time(s)');
 ylabel('U3');
+grid on;
+
 subplot(2,4,8);
 stairs(time(1:end-1), controls_MPC(:,4)); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('U4');
+grid on;
+
+saveas(gcf,'y_u', 'png')
+
 
 
 
@@ -238,6 +255,8 @@ plot(time, state_sim(:,7),'b'); hold on;
 plot(time, ref_traj(1:(end-N+1),7),'r--');
 xlabel('time(s)');
 ylabel('X [m]');
+grid on;
+
 legend('Simulation', 'Reference');
 
 
@@ -246,6 +265,8 @@ plot(time, state_sim(:,8),'b'); hold on;
 plot(time, ref_traj(1:(end-N+1),8),'r--');
 ylabel('Y [m]');
 xlabel('time(s)');
+grid on;
+
 legend('Simulation', 'Reference');
 
 
@@ -255,7 +276,11 @@ plot(time, state_sim(:,9),'b'); hold on;
 plot(time, ref_traj(1:(end-N+1),9),'r--');
 ylabel('Z [m]');
 xlabel('time(s)');
+grid on;
+
 legend('Simulation', 'Reference');
+saveas(gcf,'tracking', 'png')
+
 
 
 
@@ -263,14 +288,26 @@ figure(3)
 subplot(3,1,1);
 plot(time, state_sim(:,7)-ref_traj(1:(end-N+1),7),'b'); hold on;
 ylabel('Error X [m]');
+grid on;
+
 xlabel('time(s)');
 
 subplot(3,1,2);
 plot(time, state_sim(:,8)-ref_traj(1:(end-N+1),8),'b'); hold on;
 ylabel('Error Y [m]');
+xlabel('time(s)');
+grid on;
+
+grid on;
 
 subplot(3,1,3);
 plot(time, state_sim(:,9)-ref_traj(1:(end-N+1),9),'b'); hold on;
 ylabel('Error Z [m]');
+xlabel('time(s)');
+grid on;
+
+grid on;
+saveas(gcf,'errors', 'png')
+
 
 

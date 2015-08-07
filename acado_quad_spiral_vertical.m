@@ -76,10 +76,10 @@ ocp.subjectTo( euler_rates_min <= p <= euler_rates_max );
 ocp.subjectTo( euler_rates_min <= q <= euler_rates_max );
 ocp.subjectTo( euler_rates_min <= rr <= euler_rates_max );
 
-u1_min = 0; u1_max = 60; 
-u2_min = -80; u2_max = 80; 
-u3_min = -80; u3_max = 80; 
-u4_min = -80; u4_max = 80; 
+u1_min = 0; u1_max = 15; 
+u2_min = -1; u2_max = 1; 
+u3_min = -1; u3_max = 1; 
+u4_min = -1; u4_max = 1; 
 
 ocp.subjectTo( u1_min <= u1 <= u1_max );
 ocp.subjectTo( u2_min <= u2 <= u2_max );
@@ -130,7 +130,7 @@ display('               Simulation Loop'                                    )
 display('------------------------------------------------------------------')
 
 iter = 0; time = 0;
-Tf = 10;
+Tf = 4;
 INFO_MPC = [];
 controls_MPC = [];
 state_sim = X0;
@@ -189,6 +189,7 @@ plot(time, state_sim(:,3),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Euler angles');
+grid on;
 
 subplot(2,4,2);
 plot(time, state_sim(:,4),'r'); hold on;
@@ -197,6 +198,8 @@ plot(time, state_sim(:,6),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Euler rates');
+grid on;
+
 
 subplot(2,4,3);
 plot(time, state_sim(:,7),'r'); hold on;
@@ -205,6 +208,8 @@ plot(time, state_sim(:,9),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Translational states');
+grid on;
+
 
 subplot(2,4,4);
 plot(time, state_sim(:,10),'r'); hold on;
@@ -213,25 +218,39 @@ plot(time, state_sim(:,12),'b'); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('Translational velocities');
+grid on;
+
 
 
 subplot(2,4,5);
 stairs(time(1:end-1), controls_MPC(:,1),'r'); hold on;
+plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('U1');
+grid on;
+
 subplot(2,4,6);
 stairs(time(1:end-1), controls_MPC(:,2),'b'); hold on;
+plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('U2');
+grid on;
+
 subplot(2,4,7);
 stairs(time(1:end-1), controls_MPC(:,3),'g'); hold on;
+plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('U3');
+grid on;
+
 subplot(2,4,8);
 stairs(time(1:end-1), controls_MPC(:,4)); hold on;
 plot([0 time(end)], [0 0], 'r:');
 xlabel('time(s)');
 ylabel('U4');
+grid on;
+saveas(gcf, 'y_and_u', 'png')
+
 
 
 
@@ -243,6 +262,8 @@ plot(time, ref_traj(1:(end-N+1),7),'r--');
 xlabel('time(s)');
 ylabel('X [m]');
 legend('Simulation', 'Reference');
+grid on;
+
 
 
 subplot(3,1,2);
@@ -251,6 +272,8 @@ plot(time, ref_traj(1:(end-N+1),8),'r--');
 ylabel('Y [m]');
 xlabel('time(s)');
 legend('Simulation', 'Reference');
+grid on;
+
 
 
 
@@ -260,6 +283,10 @@ plot(time, ref_traj(1:(end-N+1),9),'r--');
 ylabel('Z [m]');
 xlabel('time(s)');
 legend('Simulation', 'Reference');
+grid on;
+saveas(gcf,'reference', 'png')
+
+
 
 
 
@@ -268,13 +295,21 @@ subplot(3,1,1);
 plot(time, state_sim(:,7)-ref_traj(1:(end-N+1),7),'b'); hold on;
 ylabel('Error X [m]');
 xlabel('time(s)');
+grid on;
+
 
 subplot(3,1,2);
 plot(time, state_sim(:,8)-ref_traj(1:(end-N+1),8),'b'); hold on;
 ylabel('Error Y [m]');
+grid on;
+
 
 subplot(3,1,3);
 plot(time, state_sim(:,9)-ref_traj(1:(end-N+1),9),'b'); hold on;
 ylabel('Error Z [m]');
+grid on;
+saveas(gcf,'errors', 'png')
+
+
 
 
