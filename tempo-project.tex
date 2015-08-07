@@ -71,16 +71,14 @@ decorations.pathreplacing,decorations.pathmorphing,shapes,matrix,shapes}
 %\begin{equation} 
 %\begin{split}
 \begin{align}
-&\ddot{\phi}=\dot{\theta}\dot{\psi}a_1 + \dot{\theta}a_2;~~\ddot{\theta}=\dot{\phi}\dot{\psi} a_3 -\dot{\phi}a_4;~~\ddot{\psi}=\dot{\theta}\dot{\phi}a_5+b_3 U_4 \\
-&\Omega_r +b_1 U_2;~~\Omega_r +b_2 U_3\\
-&\ddot{x}=u_x \frac{1}{m} U_1;~~\ddot{z}=g-\big(cos(\phi)cos(\theta)\big)\frac{1}{m} U_1;~~\ddot{y}=u_y \frac{1}{m}U_1.\\
-&a_1=\frac{(I_{yy}-I_{zz})}{I_{xx}};~~a_2=\frac{J_r}{I_{xx}};~~a_3=\frac{(I_{zz}-I_{xx})}{I_{yy}} \\
-&a_4=\frac{J_r}{I_{yy}};~~a_5=\frac{(I_{xx}-I_{yy})}{I_{zz}};~~b_1=\frac{l}{I_{xx}}\\
-&b_2=\frac{l}{I_{yy}};~~b_3=\frac{l}{I_{zz}};~~b_2=\frac{l}{I_{yy}};~~b_3=\frac{l}{I_{zz}}\\ 
-&u_a=cos(\phi)cos(\theta);~~u_x=cos(\phi)sin(\theta)cos(\psi)+sin(\phi)sin(\psi)\\
-&u_y=cos(\phi)sin(\theta)cos(\psi)-sin(\phi)cos(\psi)\\
-&J_{r}\dot{\theta} \Omega_r the~gyroscopic~effect~due~to~the~propeller\\
-&dynamics.~It~is~assumed~that~U_1 = \Omega_r.
+&\ddot{\phi}=\dot{\theta}\dot{\psi}\frac{(I_{yy}-I_{zz})}{I_{xx}} + \dot{\theta}\frac{J_r}{I_{xx}} \Omega_r, \\
+&\ddot{\theta}=\dot{\phi}\dot{\psi} \frac{(I_{zz} -\dot{\phi}\frac{J_r}{I_{yy}}, \\
+&\ddot{\psi}=\dot{\theta}\dot{\phi}\frac{(I_{xx}-I_{yy})}{I_{zz}}+\frac{l}{I_{zz}} U_4, \\
+&\Omega_r +\frac{l}{I_{xx}} U_2;~~\Omega_r +\frac{l}{I_{yy}} U_3, \\
+&\ddot{x}=cos(\phi)sin(\theta)cos(\psi)+sin(\phi)sin(\psi) \frac{1}{m} U_1, \\
+&\ddot{y}=cos(\phi)sin(\theta)cos(\psi)-sin(\phi)cos(\psi)\frac{1}{m}U_1,\\
+&\ddot{z}=g-\big(cos(\phi)cos(\theta)\big)\frac{1}{m} U_1. \\
+
 \end{align} 
 %\end{split}
 %\end{equation}
